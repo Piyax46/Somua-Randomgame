@@ -11,7 +11,7 @@ class Category(db.Model):
     name = db.Column(db.String(100), nullable=False, unique=True)
     color = db.Column(db.String(7), default='#e94560')
     icon = db.Column(db.String(50), default='gamepad-2')
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=7))))
 
     games = db.relationship('Game', backref='category', lazy=True)
 
@@ -35,7 +35,7 @@ class Game(db.Model):
     image_url = db.Column(db.String(500), default='')
     is_favorite = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=7))))
 
     play_history = db.relationship('PlayHistory', backref='game', lazy=True,
                                    cascade='all, delete-orphan')
@@ -71,10 +71,10 @@ class PlayHistory(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)
-    played_at = db.Column(db.Date, nullable=False, default=lambda: datetime.now(timezone.utc).date())
+    played_at = db.Column(db.Date, nullable=False, default=lambda: datetime.now(timezone(timedelta(hours=7))).date())
     notes = db.Column(db.Text, default='')
     rating = db.Column(db.Integer, default=0)  # 0-5 stars
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=7))))
 
     def to_dict(self):
         return {

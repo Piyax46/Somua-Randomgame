@@ -132,7 +132,7 @@ def export_data():
 
     data = {
         'version': '1.0',
-        'exported_at': datetime.now(timezone.utc).isoformat(),
+        'exported_at': datetime.now(timezone(timedelta(hours=7))).isoformat(),
         'categories': [c.to_dict() for c in categories],
         'games': [g.to_dict() for g in games],
         'history': [h.to_dict() for h in history],

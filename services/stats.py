@@ -9,7 +9,7 @@ def get_dashboard_stats():
     total_plays = PlayHistory.query.count()
     total_categories = Category.query.count()
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(timezone(timedelta(hours=7))).date()
     today_play = PlayHistory.query.filter_by(played_at=today).first()
 
     # Most played games
@@ -79,7 +79,7 @@ def get_dashboard_stats():
 
 def calculate_streak():
     """Calculate current consecutive days played."""
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(timezone(timedelta(hours=7))).date()
     streak = 0
     current_date = today
 

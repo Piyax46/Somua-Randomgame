@@ -18,7 +18,7 @@ def calculate_weight(game, all_history):
     play_count_penalty = play_count * 12
 
     # Cooldown: penalty if played in last 3 days
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(timezone(timedelta(hours=7))).date()
     cooldown_penalty = 0
     recency_penalty = 0
 

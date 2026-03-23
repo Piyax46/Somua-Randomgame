@@ -8,7 +8,7 @@ history_bp = Blueprint('history', __name__)
 
 @history_bp.route('/history')
 def history():
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(timezone(timedelta(hours=7))).date()
     year = request.args.get('year', today.year, type=int)
     month = request.args.get('month', today.month, type=int)
 
@@ -43,7 +43,7 @@ def history():
 
 @history_bp.route('/history/calendar')
 def history_calendar():
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(timezone(timedelta(hours=7))).date()
     year = request.args.get('year', today.year, type=int)
     month = request.args.get('month', today.month, type=int)
 
@@ -91,7 +91,7 @@ def add_history():
     db.session.add(history)
     db.session.commit()
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(timezone(timedelta(hours=7))).date()
     year = played_at.year
     month = played_at.month
     days, start_date, end_date = get_monthly_history(year, month)
@@ -126,7 +126,7 @@ def delete_history(history_id):
     db.session.delete(h)
     db.session.commit()
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(timezone(timedelta(hours=7))).date()
     days, start_date, end_date = get_monthly_history(year, month)
 
     if month == 1:

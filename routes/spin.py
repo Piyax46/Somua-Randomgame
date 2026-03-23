@@ -9,7 +9,7 @@ spin_bp = Blueprint('spin', __name__)
 @spin_bp.route('/')
 def index():
     games = Game.query.filter_by(is_active=True).all()
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(timezone(timedelta(hours=7))).date()
     today_play = PlayHistory.query.filter_by(played_at=today).first()
     weights = get_all_weights()
     return render_template('index.html',
@@ -79,7 +79,7 @@ def accept_spin():
     if not game:
         return '<div class="toast error">ไม่พบเกม</div>', 404
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(timezone(timedelta(hours=7))).date()
 
     history = PlayHistory(
         game_id=game_id,
