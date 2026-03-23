@@ -1,0 +1,36 @@
+<div class="spin-result animate-in">
+    <div class="result-sparkles">✨</div>
+    <h2 class="result-title">ได้เกม!</h2>
+    <div class="result-game-card glass-card">
+        {% if game.image_url %}
+        <img src="{{ game.image_url }}" alt="{{ game.name }}" class="result-image">
+        {% else %}
+        <div class="result-image-placeholder">🎮</div>
+        {% endif %}
+        <h3 class="result-game-name">{{ game.name }}</h3>
+        {% if game.category %}
+        <span class="result-category">{{ game.category.name }}</span>
+        {% endif %}
+        <div class="result-meta">
+            👥 {{ game.min_players }}–{{ game.max_players }} คน · เล่นไปแล้ว {{ game.play_count }} ครั้ง
+        </div>
+    </div>
+
+    <div class="result-actions">
+        <form hx-post="/spin/accept"
+              hx-target="#spin-display"
+              hx-swap="innerHTML"
+              class="accept-form">
+            <input type="hidden" name="game_id" value="{{ game.id }}">
+            <input type="text" name="notes" placeholder="โน้ตเพิ่มเติม (ไม่บังคับ)" class="form-input notes-input">
+            <div class="result-buttons">
+                <button type="submit" class="btn btn-primary btn-accept" id="accept-spin">เล่นเกมนี้!</button>
+                <button type="button" class="btn btn-ghost"
+                        hx-post="/spin"
+                        hx-target="#spin-display"
+                        hx-swap="innerHTML"
+                        id="respin-btn">สุ่มใหม่</button>
+            </div>
+        </form>
+    </div>
+</div>

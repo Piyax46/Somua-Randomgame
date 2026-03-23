@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">ประวัติการเล่น</h1>
+    <p class="page-subtitle">ดูว่าแต่ละวันเล่นเกมอะไร</p>
+</div>
+
+<div class="glass-card form-card">
+    <h3 class="form-title">เพิ่มบันทึกย้อนหลัง</h3>
+    <form hx-post="/history"
+          hx-target="#calendar-container"
+          hx-swap="innerHTML"
+          hx-on::after-request="if(event.detail.successful) this.reset()"
+          id="add-history-form">
+        <div class="form-row">
+            <div class="form-group">
+                <select name="game_id" required class="form-select" id="history-game-select">
+                    <option value="">เลือกเกม...</option>
+                    {% for game in games %}
+                    <option value="{{ game.id }}">{{ game.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="date" name="played_at" required class="form-input" 
+                       value="{{ today.isoformat() }}" id="history-date-input">
+            </div>
+            <div class="form-group">
+                <input type="text" name="notes" placeholder="โน้ต (ไม่บังคับ)" class="form-input" id="history-notes-input">
+            </div>
+            <button type="submit" class="btn btn-primary" id="add-history-submit">เพิ่ม</button>
+        </div>
+    </form>
+</div>
+
+<div id="calendar-container">
+    {% include 'components/calendar.html' %}
+</div>
+{% endblock %}

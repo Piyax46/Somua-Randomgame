@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">สุ่มตัวละคร</h1>
+    <p class="page-subtitle">สุ่ม Hero / Champion สำหรับเกม MOBA</p>
+</div>
+
+<!-- Game Selector -->
+<div class="hero-game-selector">
+    <button class="hero-game-tab active" id="tab-dota2" onclick="switchGame('dota2')">
+        <span class="hero-game-icon">🔴</span>
+        <span class="hero-game-label">Dota 2</span>
+        <span class="hero-game-count">{{ dota2_heroes|length }} heroes</span>
+    </button>
+    <button class="hero-game-tab" id="tab-lol" onclick="switchGame('lol')">
+        <span class="hero-game-icon">🟡</span>
+        <span class="hero-game-label">League of Legends</span>
+        <span class="hero-game-count">{{ lol_champions|length }} champions</span>
+    </button>
+</div>
+
+<!-- ========== DOTA 2 PANEL ========== -->
+<div class="hero-panel" id="panel-dota2">
+    <div class="hero-spin-area">
+        <div class="hero-result-box" id="dota2-result">
+            <div class="hero-idle">
+                <div class="hero-idle-icon">⚔️</div>
+                <p class="hero-idle-text">กดสุ่ม Hero ด้านล่าง</p>
+            </div>
+        </div>
+        <button class="spin-btn" id="dota2-spin-btn" onclick="randomDota2Hero()">
+            <span class="spin-btn-icon">🎲</span>
+            <span class="spin-btn-text">สุ่ม Hero</span>
+        </button>
+    </div>
+
+    <!-- Role randomizer (shows after hero is picked) -->
+    <div class="hero-role-section" id="dota2-role-section" style="display:none">
+        <h3 class="hero-role-title">สุ่มตำแหน่ง?</h3>
+        <div class="hero-role-cards">
+            {% for role in dota2_roles %}
+            <div class="hero-role-card" id="dota2-role-{{ role.id }}" style="--role-color: {{ role.color }}">
+                <span class="hero-role-icon">{{ role.icon }}</span>
+                <span class="hero-role-name">{{ role.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <button class="btn btn-primary" id="dota2-role-btn" onclick="randomDota2Role()">
+            <span>🎲</span> สุ่มตำแหน่ง
+        </button>
+        <div class="hero-role-result" id="dota2-role-result"></div>
+    </div>
+</div>
+
+<!-- ========== LOL PANEL ========== -->
+<div class="hero-panel" id="panel-lol" style="display:none">
+    <div class="lol-lanes-grid">
+        {% for lane in lol_lanes %}
+        <div class="lol-lane-card" id="lol-lane-{{ lane.id }}" style="--lane-color: {{ lane.color }}">
+            <div class="lol-lane-header">
+                <span class="lol-lane-icon">{{ lane.icon }}</span>
+                <span class="lol-lane-name">{{ lane.name }}</span>
+            </div>
+            <div class="lol-lane-result" id="lol-result-{{ lane.id }}">
+                <span class="lol-lane-empty">?</span>
+            </div>
+            <button class="btn btn-sm lol-lane-btn" onclick="randomLolChampion('{{ lane.id }}')">
+                🎲 สุ่ม
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="lol-actions">
+        <button class="spin-btn" onclick="randomAllLanes()">
+            <span class="spin-btn-icon">🎲</span>
+            <span class="spin-btn-text">สุ่มทุกเลน!</span>
+        </button>
+        <button class="btn btn-ghost" onclick="resetLolLanes()">รีเซ็ต</button>
+    </div>
+</div>
+
+<script>
+(function() {
+    /* Game tab switching */
+    window.switchGame = function(game) {
+        document.getElementById('panel-dota2').style.display = game === 'dota2' ? 'block' : 'none';
+        document.getElementById('panel-lol').style.display = game === 'lol' ? 'block' : 'none';
+        document.getElementById('tab-dota2').classList.toggle('active', game === 'dota2');
+        document.getElementById('tab-lol').classList.toggle('active', game === 'lol');
+    };
+
+    /* ===== DOTA 2 ===== */
+    window.randomDota2Hero = function() {
+        var btn = document.getElementById('dota2-spin-btn');
+        btn.disabled = true;
+
+        /* Shuffle animation */
+        var resultBox = document.getElementById('dota2-result');
+        var allHeroes = {{ dota2_heroes | tojson }};
+        var shuffleCount = 0;
+        var maxShuffles = 15;
+
+        var shuffleInterval = setInterval(function() {
+            var randHero = allHeroes[Math.floor(Math.random() * allHeroes.length)];
+            resultBox.innerHTML = '<div class="hero-shuffle">' +
+                                  '<div class="hero-shuffle-img" style="background-image: url(' + randHero.img + ')"></div>' +
+                                  '<h2 class="hero-name-shuffle">' + randHero.name + '</h2></div>';
+            shuffleCount++;
+            if (shuffleCount >= maxShuffles) {
+                clearInterval(shuffleInterval);
+                /* Fetch real result */
+                fetch('/heroes/dota2/random', { method: 'POST' })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        showDota2Result(data.hero);
+                        btn.disabled = false;
+                    });
+            }
+        }, 80);
+    };
+
+    function showDota2Result(hero) {
+        var resultBox = document.getElementById('dota2-result');
+        resultBox.innerHTML =
+            '<div class="hero-result animate-in">' +
+                '<img src="' + hero.img + '" alt="Hero Image" class="hero-result-img" />' +
+                '<div class="hero-result-details">' +
+                    '<div class="hero-result-badge">🎯 ได้ตัว!</div>' +
+                    '<h2 class="hero-result-name">' + hero.name + '</h2>' +
+                '</div>' +
+            '</div>';
+
+        /* Show role section */
+        document.getElementById('dota2-role-section').style.display = 'block';
+        document.getElementById('dota2-role-result').innerHTML = '';
+        /* Reset role highlights */
+        document.querySelectorAll('.hero-role-card').forEach(function(c) {
+            c.classList.remove('selected');
+        });
+    }
+
+    window.randomDota2Role = function() {
+        var btn = document.getElementById('dota2-role-btn');
+        btn.disabled = true;
+        var cards = document.querySelectorAll('#dota2-role-section .hero-role-card');
+
+        /* Highlight shuffle animation */
+        var shuffleCount = 0;
+        var maxShuffles = 12;
+        var cardArr = Array.from(cards);
+
+        var shuffleInterval = setInterval(function() {
+            cardArr.forEach(function(c) { c.classList.remove('selected'); });
+            var randIdx = Math.floor(Math.random() * cardArr.length);
+            cardArr[randIdx].classList.add('selected');
+            shuffleCount++;
+            if (shuffleCount >= maxShuffles) {
+                clearInterval(shuffleInterval);
+                fetch('/heroes/dota2/role', { method: 'POST' })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        cardArr.forEach(function(c) { c.classList.remove('selected'); });
+                        var selectedCard = document.getElementById('dota2-role-' + data.role.id);
+                        if (selectedCard) selectedCard.classList.add('selected');
+                        document.getElementById('dota2-role-result').innerHTML =
+                            '<div class="hero-role-final animate-in">' +
+                                '<span>' + data.role.icon + '</span> ' + data.role.name +
+                            '</div>';
+                        btn.disabled = false;
+                    });
+            }
+        }, 100);
+    };
+
+    /* ===== LOL ===== */
+    var lolUsedChamps = {};
+
+    window.randomLolChampion = function(laneId) {
+        var allChamps = {{ lol_champions | tojson }};
+
+        /* Filter out already used champs for other lanes */
+        var used = Object.values(lolUsedChamps).map(function(c) { return c.key; });
+        var available = allChamps.filter(function(c) { return used.indexOf(c.key) === -1; });
+        if (available.length === 0) available = allChamps;
+
+        /* Quick shuffle animation */
+        var resultEl = document.getElementById('lol-result-' + laneId);
+        var card = document.getElementById('lol-lane-' + laneId);
+        var shuffleCount = 0;
+        var maxShuffles = 10;
+
+        var shuffleInterval = setInterval(function() {
+            var rand = available[Math.floor(Math.random() * available.length)];
+            resultEl.innerHTML = '<div class="lol-champ-shuffle-box"><img src="' + rand.img + '" class="lol-champ-shuffle-img" /><span class="lol-champ-shuffle">' + rand.name + '</span></div>';
+            shuffleCount++;
+            if (shuffleCount >= maxShuffles) {
+                clearInterval(shuffleInterval);
+                fetch('/heroes/lol/random', { method: 'POST' })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        lolUsedChamps[laneId] = data.champion;
+                        resultEl.innerHTML =
+                            '<div class="lol-champ-result animate-in">' +
+                                '<img src="' + data.champion.img + '" alt="Champion" class="lol-champ-img" />' +
+                                '<span class="lol-champ-name">' + data.champion.name + '</span>' +
+                            '</div>';
+                        card.classList.add('filled');
+                    });
+            }
+        }, 80);
+    };
+
+    window.randomAllLanes = function() {
+        var lanes = ['top', 'jungle', 'mid', 'adc', 'support'];
+        lanes.forEach(function(lane, i) {
+            setTimeout(function() {
+                randomLolChampion(lane);
+            }, i * 600);
+        });
+    };
+
+    window.resetLolLanes = function() {
+        lolUsedChamps = {};
+        var lanes = ['top', 'jungle', 'mid', 'adc', 'support'];
+        lanes.forEach(function(lane) {
+            document.getElementById('lol-result-' + lane).innerHTML = '<span class="lol-lane-empty">?</span>';
+            document.getElementById('lol-lane-' + lane).classList.remove('filled');
+        });
+    };
+})();
+</script>
+{% endblock %}

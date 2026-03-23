@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOMUA — สุ่มเกมรายวัน</title>
+    <meta name="description" content="SOMUA — สุ่มเกมเล่นกับเพื่อนๆ กลุ่ม SOMUA">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">
+                <span class="brand-icon">🎲</span>
+                <span class="brand-text">SOMUA</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}" id="nav-home">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="8" cy="8" r="1.5"/><circle cx="16" cy="8" r="1.5"/><circle cx="8" cy="16" r="1.5"/><circle cx="16" cy="16" r="1.5"/><circle cx="12" cy="12" r="1.5"/></svg>
+                    <span>สุ่มเกม</span>
+                </a>
+                <a href="/heroes" class="nav-link {% if '/heroes' in request.path %}active{% endif %}" id="nav-heroes">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    <span>สุ่มตัว</span>
+                </a>
+                <a href="/games" class="nav-link {% if '/games' in request.path %}active{% endif %}" id="nav-games">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4"/><circle cx="15" cy="11" r="1"/><circle cx="18" cy="14" r="1"/></svg>
+                    <span>จัดการเกม</span>
+                </a>
+                <a href="/history" class="nav-link {% if '/history' in request.path %}active{% endif %}" id="nav-history">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    <span>ประวัติ</span>
+                </a>
+                <a href="/stats" class="nav-link {% if '/stats' in request.path %}active{% endif %}" id="nav-stats">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                    <span>สถิติ</span>
+                </a>
+            </div>
+            <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+                <svg class="theme-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                <svg class="theme-icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </nav>
+
+    <nav class="mobile-nav" id="mobile-nav">
+        <a href="/" class="mobile-nav-link {% if request.path == '/' %}active{% endif %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="1.5"/></svg>
+            <span>สุ่ม</span>
+        </a>
+        <a href="/heroes" class="mobile-nav-link {% if '/heroes' in request.path %}active{% endif %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/></svg>
+            <span>สุ่มตัว</span>
+        </a>
+        <a href="/games" class="mobile-nav-link {% if '/games' in request.path %}active{% endif %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4"/></svg>
+            <span>เกม</span>
+        </a>
+        <a href="/history" class="mobile-nav-link {% if '/history' in request.path %}active{% endif %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <span>ประวัติ</span>
+        </a>
+        <a href="/stats" class="mobile-nav-link {% if '/stats' in request.path %}active{% endif %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+            <span>สถิติ</span>
+        </a>
+    </nav>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        /* Theme Toggle */
+        function toggleTheme() {
+            var html = document.documentElement;
+            var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('somua-theme', next);
+        }
+        (function() {
+            var saved = localStorage.getItem('somua-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+
+        /* Modal System */
+        function showModal(opts) {
+            var container = document.getElementById('modal-container');
+            var typeClass = opts.type || '';
+            var html = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">'
+                + '<div class="modal-box ' + typeClass + '">'
+                + '<div class="modal-icon">' + (opts.icon || '') + '</div>'
+                + '<div class="modal-title">' + (opts.title || '') + '</div>'
+                + '<div class="modal-text">' + (opts.text || '') + '</div>'
+                + '<div class="modal-actions">' + (opts.actions || '') + '</div>'
+                + '</div></div>';
+            container.innerHTML = html;
+        }
+
+        function showSuccess(title, text) {
+            showModal({
+                type: 'success',
+                icon: '✓',
+                title: title,
+                text: text || '',
+                actions: '<button class="btn btn-primary" onclick="closeModal()">ตกลง</button>'
+            });
+            setTimeout(closeModal, 2500);
+        }
+
+        function showConfirm(title, text, onConfirm) {
+            window._confirmCallback = onConfirm;
+            showModal({
+                type: 'danger',
+                icon: '!',
+                title: title,
+                text: text,
+                actions: '<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>'
+                    + '<button class="btn btn-danger" onclick="window._confirmCallback();closeModal()">ลบ</button>'
+            });
+        }
+
+        function closeModal() {
+            var overlay = document.querySelector('.modal-overlay');
+            if (overlay) {
+                overlay.classList.add('closing');
+                setTimeout(function() {
+                    document.getElementById('modal-container').innerHTML = '';
+                }, 200);
+            }
+        }
+
+        /* Confirm Delete via modal instead of browser confirm */
+        function confirmDelete(url, targetId, name) {
+            showConfirm(
+                'ลบ ' + name + '?',
+                'การลบจะไม่สามารถกู้คืนได้',
+                function() {
+                    htmx.ajax('DELETE', url, {target: '#' + targetId, swap: 'innerHTML'});
+                }
+            );
+        }
+
+        function confirmDeleteHistory(url, targetId, name, day) {
+            showConfirm(
+                'ลบบันทึก?',
+                'ลบ ' + name + ' วันที่ ' + day,
+                function() {
+                    htmx.ajax('DELETE', url, {target: '#' + targetId, swap: 'innerHTML'});
+                }
+            );
+        }
+
+        function confirmDeleteCategory(url, targetId, name) {
+            showConfirm(
+                'ลบหมวดหมู่ ' + name + '?',
+                'เกมในหมวดนี้จะไม่ถูกลบ แค่ไม่มีหมวดหมู่',
+                function() {
+                    htmx.ajax('DELETE', url, {target: '#' + targetId, swap: 'innerHTML'});
+                }
+            );
+        }
+
+        /* HTMX events */
+        document.body.addEventListener('htmx:afterSwap', function(e) {
+            var toasts = e.detail.target.querySelectorAll('.toast');
+            toasts.forEach(function(t) {
+                setTimeout(function() {
+                    t.classList.add('toast-exit');
+                    setTimeout(function() { t.remove(); }, 200);
+                }, 2500);
+            });
+        });
+
+        /* Show success after game operations */
+        document.body.addEventListener('htmx:afterRequest', function(e) {
+            var verb = (e.detail.requestConfig.verb || '').toUpperCase();
+            var path = e.detail.pathInfo.requestPath || '';
+
+            if (e.detail.successful) {
+                if (verb === 'POST' && path === '/games') {
+                    showSuccess('เพิ่มเกมแล้ว!', 'เกมถูกเพิ่มเข้าระบบเรียบร้อย');
+                } else if (verb === 'DELETE' && path.match(/^\/games\/\d+$/)) {
+                    showSuccess('ลบเกมแล้ว!', 'เกมถูกลบออกจากระบบ');
+                } else if (verb === 'PUT' && path.match(/^\/games\/\d+$/)) {
+                    showSuccess('บันทึกแล้ว!', 'แก้ไขข้อมูลเกมเรียบร้อย');
+                } else if (verb === 'POST' && path === '/categories') {
+                    showSuccess('เพิ่มหมวดหมู่แล้ว!');
+                } else if (verb === 'DELETE' && path.match(/^\/categories\/\d+$/)) {
+                    showSuccess('ลบหมวดหมู่แล้ว!');
+                } else if (verb === 'POST' && path.match(/^\/games\/\d+\/favorite$/)) {
+                    // no modal for favorite toggle
+                } else if (verb === 'POST' && path === '/history') {
+                    showSuccess('เพิ่มบันทึกแล้ว!');
+                } else if (verb === 'DELETE' && path.match(/^\/history\/\d+$/)) {
+                    showSuccess('ลบบันทึกแล้ว!');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

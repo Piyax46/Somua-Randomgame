@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">สถิติ</h1>
+    <p class="page-subtitle">ภาพรวมการเล่นเกมของกลุ่ม SOMUA</p>
+</div>
+
+<div class="stats-overview">
+    <div class="stat-card">
+        <div class="stat-icon">🎮</div>
+        <div class="stat-value">{{ total_games }}</div>
+        <div class="stat-label">เกมทั้งหมด</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🎲</div>
+        <div class="stat-value">{{ total_plays }}</div>
+        <div class="stat-label">เล่นทั้งหมด</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-value">{{ streak }}</div>
+        <div class="stat-label">วัน Streak</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🏷️</div>
+        <div class="stat-value">{{ total_categories }}</div>
+        <div class="stat-label">หมวดหมู่</div>
+    </div>
+</div>
+
+{% if today_play %}
+<div class="today-banner glass-card">
+    <div class="today-badge">วันนี้เล่น</div>
+    <h2 class="today-game">{{ today_play.game.name }}</h2>
+</div>
+{% else %}
+<div class="today-banner glass-card empty">
+    <div class="today-badge">ยังไม่ได้เล่นวันนี้</div>
+    <p><a href="/" class="link-accent">ไปสุ่มเกม →</a></p>
+</div>
+{% endif %}
+
+{% if most_played %}
+<div class="stats-section">
+    <h3 class="section-subtitle">เกมที่เล่นบ่อยที่สุด</h3>
+    <div class="ranking-list">
+        {% for name, game_id, count in most_played %}
+        <div class="ranking-item">
+            <span class="ranking-position">{{ loop.index }}</span>
+            <span class="ranking-name">{{ name }}</span>
+            <div class="ranking-bar-container">
+                <div class="ranking-bar" style="width: {{ (count / most_played[0][2] * 100) if most_played[0][2] > 0 else 0 }}%"></div>
+            </div>
+            <span class="ranking-count">{{ count }} ครั้ง</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if least_played %}
+<div class="stats-section">
+    <h3 class="section-subtitle">เกมที่เล่นน้อยที่สุด</h3>
+    <div class="ranking-list">
+        {% for game, count in least_played %}
+        <div class="ranking-item">
+            <span class="ranking-position dim">{{ loop.index }}</span>
+            <span class="ranking-name">{{ game.name }}</span>
+            <span class="ranking-count dim">{{ count }} ครั้ง</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if category_dist %}
+<div class="stats-section">
+    <h3 class="section-subtitle">หมวดหมู่ที่เล่น</h3>
+    <div class="category-chart">
+        {% set total_cat_plays = category_dist | map(attribute=2) | sum %}
+        {% for name, color, count in category_dist %}
+        <div class="category-bar-item">
+            <div class="category-bar-label">
+                <span class="category-dot" style="background: {{ color }}"></span>
+                <span>{{ name }}</span>
+            </div>
+            <div class="category-bar-container">
+                <div class="category-bar" style="width: {{ (count / total_cat_plays * 100) if total_cat_plays > 0 else 0 }}%; background: {{ color }}"></div>
+            </div>
+            <span class="category-bar-count">{{ count }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if monthly_plays %}
+<div class="stats-section">
+    <h3 class="section-subtitle">กิจกรรมรายเดือน</h3>
+    <div class="monthly-chart">
+        {% set max_monthly = monthly_plays | map(attribute=1) | max %}
+        {% for month_str, count in monthly_plays %}
+        <div class="monthly-bar-item">
+            <div class="monthly-bar-wrapper">
+                <div class="monthly-bar" style="height: {{ (count / max_monthly * 100) if max_monthly > 0 else 0 }}%"></div>
+            </div>
+            <span class="monthly-label">{{ month_str }}</span>
+            <span class="monthly-count">{{ count }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if recent %}
+<div class="stats-section">
+    <h3 class="section-subtitle">เล่นล่าสุด</h3>
+    <div class="recent-list">
+        {% for h in recent %}
+        <div class="recent-item">
+            <div class="recent-date">{{ h.played_at.strftime('%d/%m/%Y') }}</div>
+            <div class="recent-game">{{ h.game.name }}</div>
+            {% if h.notes %}
+            <div class="recent-notes">{{ h.notes }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

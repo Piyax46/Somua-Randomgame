@@ -1,0 +1,20 @@
+{% for wi in weights %}
+<div class="weight-card glass-card">
+    <div class="weight-header">
+        {% if wi.game.image_url %}
+        <img src="{{ wi.game.image_url }}" alt="{{ wi.game.name }}" class="weight-thumb">
+        {% endif %}
+        <span class="weight-name">{{ wi.game.name }}</span>
+        {% if wi.game.is_favorite %}
+        <span class="weight-fav">⭐</span>
+        {% endif %}
+    </div>
+    <div class="weight-bar-container">
+        <div class="weight-bar" style="width: {{ wi.percentage }}%"></div>
+    </div>
+    <div class="weight-info">
+        <span class="weight-percent">{{ wi.percentage }}%</span>
+        <span class="weight-plays">เล่น {{ wi.play_count }} ครั้ง</span>
+    </div>
+</div>
+{% endfor %}

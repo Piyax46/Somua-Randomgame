@@ -1,0 +1,48 @@
+{% if games %}
+<div class="game-grid">
+    {% for game in games %}
+    <div class="game-card" id="game-card-{{ game.id }}">
+        <div class="game-card-header">
+            {% if game.image_url %}
+            <img src="{{ game.image_url }}" alt="{{ game.name }}" class="game-card-image">
+            {% else %}
+            <div class="game-card-image-placeholder">🎮</div>
+            {% endif %}
+            <button class="fav-button {% if game.is_favorite %}active{% endif %}"
+                    hx-post="/games/{{ game.id }}/favorite"
+                    hx-target="#game-list"
+                    hx-swap="innerHTML"
+                    title="Favorite"
+                    id="fav-{{ game.id }}">
+                {% if game.is_favorite %}⭐{% else %}☆{% endif %}
+            </button>
+        </div>
+        <div class="game-card-body">
+            <h4 class="game-card-name">{{ game.name }}</h4>
+            {% if game.category %}
+            <span class="game-card-category">{{ game.category.name }}</span>
+            {% endif %}
+            <div class="game-card-meta">
+                <span>👥 {{ game.min_players }}–{{ game.max_players }}</span>
+                <span>🎲 {{ game.play_count }}x</span>
+            </div>
+        </div>
+        <div class="game-card-actions">
+            <button class="btn btn-sm btn-ghost"
+                    hx-get="/games/{{ game.id }}/edit"
+                    hx-target="#game-card-{{ game.id }}"
+                    hx-swap="outerHTML"
+                    id="edit-{{ game.id }}">แก้ไข</button>
+            <button class="btn btn-sm btn-danger"
+                    onclick="confirmDelete('/games/{{ game.id }}', 'game-list', '{{ game.name }}')"
+                    id="delete-{{ game.id }}">ลบ</button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">🎮</div>
+    <p>ยังไม่มีเกม เพิ่มเกมแรกเลย!</p>
+</div>
+{% endif %}

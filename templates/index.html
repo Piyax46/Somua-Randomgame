@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero -->
+<div class="spin-hero">
+    <div class="spin-hero-content">
+        <h1 class="spin-hero-title">วันนี้เล่นอะไรดี?</h1>
+        <p class="spin-hero-sub">กลุ่ม SOMUA · {{ games|length }} เกม</p>
+    </div>
+
+    {% if today_play %}
+    <div class="today-strip">
+        {% if today_play.game.image_url %}
+        <img src="{{ today_play.game.image_url }}" alt="" class="today-strip-img">
+        {% endif %}
+        <div class="today-strip-info">
+            <span class="today-strip-label">เล่นแล้ววันนี้</span>
+            <span class="today-strip-game">{{ today_play.game.name }}</span>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Fortune Wheel -->
+{% if games %}
+<div class="wheel-container" id="wheel-container">
+    <div class="wheel-stage">
+        <div class="wheel-pointer">▼</div>
+        <div class="wheel-frame" id="wheel-frame">
+            <canvas id="wheel-canvas" width="420" height="420"></canvas>
+        </div>
+    </div>
+
+    <button class="spin-btn" id="spin-button" onclick="spinWheel()">
+        <span class="spin-btn-icon">🎲</span>
+        <span class="spin-btn-text" id="spin-btn-text">สุ่มเกม!</span>
+    </button>
+
+    <!-- Result overlay (hidden until spin completes) -->
+    <div class="wheel-result" id="wheel-result" style="display:none">
+        <div class="wheel-result-card">
+            <div class="wheel-result-badge">🎯 ได้เกม!</div>
+            <div id="result-image-area"></div>
+            <h3 class="wheel-result-name" id="result-name"></h3>
+            <span class="wheel-result-category" id="result-category"></span>
+            <p class="wheel-result-meta" id="result-meta"></p>
+            <form action="/spin/accept" method="post" class="wheel-result-form" id="result-form">
+                <input type="hidden" name="game_id" id="result-game-id">
+                <input type="text" name="notes" placeholder="โน้ต (ไม่บังคับ)" class="form-input wheel-result-notes">
+                <div class="wheel-result-actions">
+                    <button type="submit" class="btn btn-primary btn-accept"
+                            hx-post="/spin/accept"
+                            hx-target="#wheel-result"
+                            hx-swap="innerHTML">เล่นเกมนี้!</button>
+                    <button type="button" class="btn btn-ghost" onclick="resetWheel()">สุ่มใหม่</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="spin-stage" style="text-align:center; padding: 60px 20px;">
+    <div style="font-size: 64px; margin-bottom: 16px;">🎮</div>
+    <p style="color: var(--text-secondary);">ยังไม่มีเกม — <a href="/games">เพิ่มเกมเลย!</a></p>
+</div>
+{% endif %}
+
+<!-- Weights Section -->
+{% if weights %}
+<div class="weights-section">
+    <div class="weights-header">
+        <h2 class="weights-title">โอกาสของแต่ละเกม</h2>
+        <span class="weights-count">{{ weights|length }} เกม</span>
+    </div>
+    <div class="weights-cards" id="weights-panel"
+         hx-get="/weights"
+         hx-trigger="gameUpdated from:body"
+         hx-swap="innerHTML">
+        {% include 'components/weights_panel.html' %}
+    </div>
+</div>
+{% endif %}
+
+<script>
+(function() {
+    var canvas = document.getElementById('wheel-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var DPR = window.devicePixelRatio || 1;
+    var SIZE = 420;
+    canvas.width = SIZE * DPR;
+    canvas.height = SIZE * DPR;
+    canvas.style.width = SIZE + 'px';
+    canvas.style.height = SIZE + 'px';
+    ctx.scale(DPR, DPR);
+
+    var CX = SIZE / 2, CY = SIZE / 2, R = SIZE / 2 - 10;
+
+    /* Segment data from server */
+    var segments = [
+        {% for w in weights %}
+        {
+            name: "{{ w.game.name }}",
+            color: "{{ w.game.category.color if w.game.category else '#7c5cfc' }}",
+            pct: {{ w.percentage }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    /* Color palette for segments */
+    var palette = [
+        '#7c5cfc', '#e85d8a', '#3dd68c', '#f0b940',
+        '#45b7d1', '#c084fc', '#f97316', '#64d2a0',
+        '#e879a8', '#6cb4ee', '#a78bfa', '#fbbf24'
+    ];
+
+    var currentAngle = 0;
+    var spinning = false;
+
+    function darken(hex, amt) {
+        var num = parseInt(hex.replace('#',''), 16);
+        var r = Math.max((num >> 16) - amt, 0);
+        var g = Math.max(((num >> 8) & 0xFF) - amt, 0);
+        var b = Math.max((num & 0xFF) - amt, 0);
+        return '#' + (r.toString(16).padStart(2,'0')) + (g.toString(16).padStart(2,'0')) + (b.toString(16).padStart(2,'0'));
+    }
+
+    function drawWheel(rotation) {
+        ctx.clearRect(0, 0, SIZE, SIZE);
+        var n = segments.length;
+        if (n === 0) return;
+
+        var totalPct = 0;
+        for (var i = 0; i < n; i++) totalPct += segments[i].pct;
+
+        var startAngle = rotation - Math.PI / 2; /* top = 0 */
+
+        for (var i = 0; i < n; i++) {
+            var sweep = (segments[i].pct / totalPct) * 2 * Math.PI;
+            var endAngle = startAngle + sweep;
+            var segColor = palette[i % palette.length];
+
+            /* Segment fill */
+            ctx.beginPath();
+            ctx.moveTo(CX, CY);
+            ctx.arc(CX, CY, R, startAngle, endAngle);
+            ctx.closePath();
+
+            /* Gradient fill */
+            var grad = ctx.createRadialGradient(CX, CY, R * 0.3, CX, CY, R);
+            grad.addColorStop(0, segColor);
+            grad.addColorStop(1, darken(segColor, 30));
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            /* Border */
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            /* Text */
+            var midAngle = startAngle + sweep / 2;
+            var textR = R * 0.68;
+            var tx = CX + textR * Math.cos(midAngle);
+            var ty = CY + textR * Math.sin(midAngle);
+
+            ctx.save();
+            ctx.translate(tx, ty);
+            ctx.rotate(midAngle + Math.PI / 2);
+
+            var name = segments[i].name;
+            if (name.length > 10) name = name.substring(0, 9) + '…';
+
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.font = 'bold ' + Math.max(10, Math.min(14, 140 / n)) + 'px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            /* Text shadow */
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 3;
+            ctx.fillText(name, 0, 0);
+            ctx.shadowBlur = 0;
+
+            ctx.restore();
+
+            startAngle = endAngle;
+        }
+
+        /* Center circle */
+        ctx.beginPath();
+        ctx.arc(CX, CY, 30, 0, 2 * Math.PI);
+        var rootStyle = getComputedStyle(document.documentElement);
+        ctx.fillStyle = rootStyle.getPropertyValue('--bg-surface').trim() || '#18181f';
+        ctx.fill();
+        ctx.strokeStyle = rootStyle.getPropertyValue('--border').trim() || '#2a2a38';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        /* Center text */
+        ctx.fillStyle = rootStyle.getPropertyValue('--text-muted').trim() || '#55556a';
+        ctx.font = 'bold 14px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('SOMUA', CX, CY);
+
+        /* Outer ring */
+        ctx.beginPath();
+        ctx.arc(CX, CY, R + 4, 0, 2 * Math.PI);
+        ctx.strokeStyle = rootStyle.getPropertyValue('--border').trim() || '#2a2a38';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+    }
+
+    /* Initial draw */
+    drawWheel(0);
+
+    /* Spin function */
+    window.spinWheel = function() {
+        if (spinning) return;
+        spinning = true;
+
+        var btn = document.getElementById('spin-button');
+        var btnText = document.getElementById('spin-btn-text');
+        btn.disabled = true;
+        btnText.textContent = 'กำลังสุ่ม...';
+
+        /* Hide previous result */
+        document.getElementById('wheel-result').style.display = 'none';
+
+        /* Fetch result from server */
+        fetch('/spin/wheel', { method: 'POST' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                animateSpin(data);
+            })
+            .catch(function() {
+                spinning = false;
+                btn.disabled = false;
+                btnText.textContent = 'สุ่มเกม!';
+            });
+    };
+
+    function animateSpin(data) {
+        var n = data.segments.length;
+        var totalPct = 0;
+        for (var i = 0; i < n; i++) totalPct += data.segments[i].percentage;
+
+        /* Calculate target angle to land on selected segment */
+        var angleBeforeSelected = 0;
+        for (var i = 0; i < data.selected_index; i++) {
+            angleBeforeSelected += (data.segments[i].percentage / totalPct) * 2 * Math.PI;
+        }
+        var selectedSweep = (data.segments[data.selected_index].percentage / totalPct) * 2 * Math.PI;
+        /* Land in the middle of the segment */
+        var targetSegAngle = angleBeforeSelected + selectedSweep * (0.3 + Math.random() * 0.4);
+
+        /* Wheel rotation to align with top pointer */
+        /* Pointer is at top (12 o'clock), wheel starts drawing from top */
+        /* We need the segment to be at 0 angle (top) when stopped */
+        /* So target rotation = -(targetSegAngle) + full spins */
+        var fullSpins = 5 + Math.floor(Math.random() * 3); /* 5-7 full rotations */
+        var targetRotation = currentAngle + (fullSpins * 2 * Math.PI) + (2 * Math.PI - targetSegAngle);
+
+        var startRotation = currentAngle;
+        var totalRotation = targetRotation - startRotation;
+        var duration = 4000 + Math.random() * 1500; /* 4-5.5 seconds */
+        var startTime = null;
+
+        /* Add ticking sound visual - pulse frame */
+        var frame = document.getElementById('wheel-frame');
+        frame.classList.add('spinning');
+
+        function easeOutQuart(t) {
+            return 1 - Math.pow(1 - t, 4);
+        }
+
+        function animate(timestamp) {
+            if (!startTime) startTime = timestamp;
+            var elapsed = timestamp - startTime;
+            var progress = Math.min(elapsed / duration, 1);
+            var eased = easeOutQuart(progress);
+
+            currentAngle = startRotation + totalRotation * eased;
+            drawWheel(currentAngle);
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                /* Done */
+                frame.classList.remove('spinning');
+                spinning = false;
+                var btn = document.getElementById('spin-button');
+                var btnText = document.getElementById('spin-btn-text');
+                btn.disabled = false;
+                btnText.textContent = 'สุ่มเกม!';
+                showResult(data.selected);
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    function showResult(game) {
+        var resultDiv = document.getElementById('wheel-result');
+        var imgArea = document.getElementById('result-image-area');
+
+        if (game.image_url) {
+            imgArea.innerHTML = '<img src="' + game.image_url + '" alt="' + game.name + '" class="wheel-result-image">';
+        } else {
+            imgArea.innerHTML = '<div class="wheel-result-placeholder">🎮</div>';
+        }
+
+        document.getElementById('result-name').textContent = game.name;
+        var catEl = document.getElementById('result-category');
+        if (game.category) {
+            catEl.textContent = game.category;
+            catEl.style.display = 'inline-block';
+        } else {
+            catEl.style.display = 'none';
+        }
+        document.getElementById('result-meta').textContent =
+            '👥 ' + game.min_players + '–' + game.max_players + ' คน · เล่นไปแล้ว ' + game.play_count + ' ครั้ง';
+        document.getElementById('result-game-id').value = game.id;
+
+        resultDiv.style.display = 'block';
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    window.resetWheel = function() {
+        document.getElementById('wheel-result').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+})();
+</script>
+{% endblock %}

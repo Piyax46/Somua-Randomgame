@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">จัดการเกม</h1>
+    <p class="page-subtitle">เพิ่ม แก้ไข หรือลบเกม — ปัจจุบันมี {{ games|length }} เกม</p>
+</div>
+
+<!-- Add Game -->
+<div class="glass-card form-card">
+    <h3 class="form-title">เพิ่มเกมใหม่</h3>
+    <form hx-post="/games"
+          hx-target="#game-list"
+          hx-swap="innerHTML"
+          hx-on::after-request="if(event.detail.successful) this.reset()"
+          class="add-game-form"
+          id="add-game-form">
+        <div class="form-grid">
+            <div class="form-group form-group-wide">
+                <label for="game-name">ชื่อเกม</label>
+                <input type="text" name="name" id="game-name" placeholder="เช่น Valorant, Among Us" required class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="game-category">หมวดหมู่</label>
+                <select name="category_id" id="game-category" class="form-select">
+                    <option value="">ไม่ระบุ</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="game-min">ผู้เล่นขั้นต่ำ</label>
+                <input type="number" name="min_players" id="game-min" value="1" min="1" class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="game-max">ผู้เล่นสูงสุด</label>
+                <input type="number" name="max_players" id="game-max" value="10" min="1" class="form-input">
+            </div>
+            <div class="form-group form-group-wide">
+                <label for="game-image">URL รูปภาพ (ไม่บังคับ)</label>
+                <input type="url" name="image_url" id="game-image" placeholder="https://..." class="form-input">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="add-game-submit">เพิ่มเกม</button>
+    </form>
+</div>
+
+<!-- Categories -->
+<div class="glass-card form-card">
+    <h3 class="form-title">หมวดหมู่</h3>
+    <form hx-post="/categories"
+          hx-target="#category-list"
+          hx-swap="innerHTML"
+          hx-on::after-request="if(event.detail.successful) this.reset()"
+          id="add-category-form">
+        <div class="form-row">
+            <div class="form-group">
+                <input type="text" name="name" placeholder="ชื่อหมวดหมู่ เช่น FPS, MOBA" required class="form-input">
+            </div>
+            <div class="form-group">
+                <input type="color" name="color" value="#7c5cfc" class="form-color">
+            </div>
+            <button type="submit" class="btn btn-secondary" id="add-cat-submit">เพิ่ม</button>
+        </div>
+    </form>
+    <div id="category-list" class="category-tags">
+        {% for cat in categories %}
+        <span class="category-tag" style="--tag-color: {{ cat.color }}">
+            {{ cat.name }}
+            <button class="tag-remove"
+                    onclick="confirmDeleteCategory('/categories/{{ cat.id }}', 'category-list', '{{ cat.name }}')"
+                    id="delete-cat-{{ cat.id }}">×</button>
+        </span>
+        {% endfor %}
+    </div>
+</div>
+
+{% if categories %}
+<div class="filter-bar">
+    <a href="/games" class="filter-chip {% if not selected_category %}active{% endif %}">ทั้งหมด</a>
+    {% for cat in categories %}
+    <a href="/games?category={{ cat.id }}" 
+       class="filter-chip {% if selected_category == cat.id %}active{% endif %}"
+       style="--chip-color: {{ cat.color }}">
+        {{ cat.name }}
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div id="game-list">
+    {% include 'components/game_list.html' %}
+</div>
+
+<!-- Import/Export -->
+<div class="glass-card form-card import-export-section">
+    <h3 class="form-title">Export / Import</h3>
+    <div class="form-row">
+        <a href="/export" class="btn btn-secondary" id="export-btn">Export Backup</a>
+        <form hx-post="/import"
+              hx-target="#toast-container"
+              hx-swap="innerHTML"
+              hx-encoding="multipart/form-data"
+              class="import-form"
+              id="import-form">
+            <input type="file" name="file" accept=".json" class="form-input file-input" id="import-file">
+            <button type="submit" class="btn btn-secondary" id="import-btn">Import</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+<div class="accepted-result animate-in">
+    <div class="accepted-check">✓</div>
+    <h2 class="accepted-title">บันทึกแล้ว!</h2>
+    <p class="accepted-game">วันนี้เล่น <strong>{{ game.name }}</strong></p>
+    {% if history.notes %}
+    <p class="accepted-notes">{{ history.notes }}</p>
+    {% endif %}
+    <div class="accepted-actions">
+        <a href="/history" class="btn btn-secondary">ดูประวัติ</a>
+        <button class="btn btn-ghost"
+                hx-post="/spin"
+                hx-target="#spin-display"
+                hx-swap="innerHTML"
+                id="spin-again-btn">สุ่มอีกรอบ</button>
+    </div>
+</div>

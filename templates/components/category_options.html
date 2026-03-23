@@ -1,0 +1,8 @@
+{% for cat in categories %}
+<span class="category-tag" style="--tag-color: {{ cat.color }}">
+    {{ cat.name }}
+    <button class="tag-remove"
+            onclick="confirmDeleteCategory('/categories/{{ cat.id }}', 'category-list', '{{ cat.name }}')"
+            id="delete-cat-{{ cat.id }}">×</button>
+</span>
+{% endfor %}

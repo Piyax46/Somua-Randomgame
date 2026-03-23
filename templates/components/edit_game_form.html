@@ -1,0 +1,47 @@
+<!-- Edit Game Form (inline) -->
+<div class="game-card glass-card editing" id="game-card-{{ game.id }}">
+    <form hx-put="/games/{{ game.id }}"
+          hx-target="#game-list"
+          hx-swap="innerHTML"
+          class="edit-form">
+        <div class="edit-form-fields">
+            <div class="form-group">
+                <label>ชื่อเกม</label>
+                <input type="text" name="name" value="{{ game.name }}" required class="form-input">
+            </div>
+            <div class="form-group">
+                <label>หมวดหมู่</label>
+                <select name="category_id" class="form-select">
+                    <option value="">ไม่มี</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if game.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>ขั้นต่ำ</label>
+                    <input type="number" name="min_players" value="{{ game.min_players }}" min="1" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>สูงสุด</label>
+                    <input type="number" name="max_players" value="{{ game.max_players }}" min="1" class="form-input">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>URL รูปภาพ</label>
+                <input type="url" name="image_url" value="{{ game.image_url }}" class="form-input">
+            </div>
+        </div>
+        <div class="edit-form-actions">
+            <button type="submit" class="btn btn-primary btn-sm">💾 บันทึก</button>
+            <button type="button" class="btn btn-ghost btn-sm"
+                    hx-get="/games"
+                    hx-target="body"
+                    hx-push-url="true"
+                    hx-select="#game-list"
+                    hx-swap="outerHTML"
+                    onclick="location.reload()">❌ ยกเลิก</button>
+        </div>
+    </form>
+</div>

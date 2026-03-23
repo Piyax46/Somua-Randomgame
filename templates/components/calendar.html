@@ -1,0 +1,52 @@
+{% set month_names = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'] %}
+{% set day_names = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'] %}
+
+<div class="calendar glass-card">
+    <div class="calendar-header">
+        <button class="calendar-nav"
+                hx-get="/history/calendar?year={{ prev_year }}&month={{ prev_month }}"
+                hx-target="#calendar-container"
+                hx-swap="innerHTML"
+                id="cal-prev">❮</button>
+        <h3 class="calendar-title">{{ month_names[month] }} {{ year }}</h3>
+        <button class="calendar-nav"
+                hx-get="/history/calendar?year={{ next_year }}&month={{ next_month }}"
+                hx-target="#calendar-container"
+                hx-swap="innerHTML"
+                id="cal-next">❯</button>
+    </div>
+
+    <div class="calendar-grid">
+        {% for day_name in day_names %}
+        <div class="calendar-day-name">{{ day_name }}</div>
+        {% endfor %}
+
+        {% set first_weekday = start_date.weekday() %}
+        {% for _ in range(first_weekday) %}
+        <div class="calendar-day empty"></div>
+        {% endfor %}
+
+        {% for day_num in range(1, (end_date - start_date).days + 2) %}
+        {% set date_str = '%04d-%02d-%02d' % (year, month, day_num) %}
+        {% set day_entries = days.get(date_str, []) %}
+        {% set is_today = (year == today.year and month == today.month and day_num == today.day) %}
+
+        <div class="calendar-day {% if day_entries %}has-entries{% endif %} {% if is_today %}is-today{% endif %}">
+            <span class="day-number">{{ day_num }}</span>
+            {% if day_entries %}
+            <div class="day-entries">
+                {% for entry in day_entries %}
+                <div class="day-entry">
+                    <span class="entry-name" title="{{ entry.game.name }}">{{ entry.game.name }}</span>
+                    <button class="entry-remove"
+                            onclick="confirmDeleteHistory('/history/{{ entry.id }}', 'calendar-container', '{{ entry.game.name }}', '{{ day_num }}')"
+                            title="ลบ"
+                            id="del-history-{{ entry.id }}">×</button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
