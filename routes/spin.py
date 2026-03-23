@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify
 from models import Game, Category, PlayHistory, db
 from services.randomizer import pick_random_game, get_all_weights
-from datetime import datetime, timezone
+from datetime import timedelta, datetime, timezone
 
 spin_bp = Blueprint('spin', __name__)
 

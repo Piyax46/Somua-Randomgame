@@ -1,7 +1,7 @@
 import json
 from flask import Blueprint, render_template, request, jsonify, Response
 from models import Game, Category, PlayHistory, db
-from datetime import datetime, timezone
+from datetime import timedelta, datetime, timezone
 
 games_bp = Blueprint('games', __name__)
 

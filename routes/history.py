@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request
 from models import PlayHistory, Game, db
 from services.stats import get_monthly_history
-from datetime import datetime, timezone
+from datetime import timedelta, datetime, timezone
 
 history_bp = Blueprint('history', __name__)
 
