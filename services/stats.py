@@ -50,8 +50,14 @@ def get_dashboard_stats():
 
     # Monthly play counts (last 6 months)
     six_months_ago = today - timedelta(days=180)
+    
+    if db.engine.name == 'postgresql':
+        month_col = func.to_char(PlayHistory.played_at, 'YYYY-MM').label('month')
+    else:
+        month_col = func.strftime('%Y-%m', PlayHistory.played_at).label('month')
+        
     monthly_plays = db.session.query(
-        func.strftime('%Y-%m', PlayHistory.played_at).label('month'),
+        month_col,
         func.count(PlayHistory.id).label('count')
     ).filter(
         PlayHistory.played_at >= six_months_ago
