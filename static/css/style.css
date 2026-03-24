@@ -1247,7 +1247,15 @@ a:hover { color: var(--accent-hover); }
     background: var(--accent-soft);
     color: var(--text-primary);
 }
-.hero-game-icon { font-size: 28px; }
+.hero-game-logo { 
+    width: 32px; 
+    height: 32px; 
+    object-fit: contain; 
+    transition: transform 0.2s var(--ease);
+}
+.hero-game-tab:hover .hero-game-logo {
+    transform: scale(1.1);
+}
 .hero-game-label {
     font-family: 'Outfit', sans-serif;
     font-size: 16px;
